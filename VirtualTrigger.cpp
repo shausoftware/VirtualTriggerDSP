@@ -14,18 +14,19 @@ class VirtualTriggerKernel : public AUKernelBase {
     
 public:
 	
-    VirtualTriggerKernel(AUEffectBase *inAudioUnit );
-	virtual ~VirtualTriggerKernel();
+    VirtualTriggerKernel(AUEffectBase *inAudioUnit);
     
-	// processes one channel of non-interleaved samples
-	virtual void Process(const Float32 *inSourceP,
+    virtual ~VirtualTriggerKernel();
+    
+    // processes one channel of non-interleaved samples
+    virtual void Process(const Float32 *inSourceP,
                          Float32 *inDestP,
                          UInt32 inFramesToProcess,
                          UInt32 inNumChannels,
                          bool &ioSilence);
     
-	// resets the state
-	virtual void Reset();
+    // resets the state
+    virtual void Reset();
 
     struct AudioProcessData GetAudioProcessData();
     
@@ -34,7 +35,7 @@ private:
     struct AudioProcessData mAudioProcessData;
     
     double mWindowEnergy;
-	const Float32 *mPreviousBuffer;
+    const Float32 *mPreviousBuffer;
     int mPreviousBufferSize;
 };
 
@@ -47,53 +48,50 @@ public:
 	
     VirtualTrigger (AudioUnit component);
     
-	virtual OSStatus Version() {return kVirtualTriggerVersion;}
+    virtual OSStatus Version() {return kVirtualTriggerVersion;}
     
     virtual void Cleanup();
     
-	virtual OSStatus Initialize();
+    virtual OSStatus Initialize();
     
-	virtual AUKernelBase *NewKernel() {return new VirtualTriggerKernel(this);}
+    virtual AUKernelBase *NewKernel() {return new VirtualTriggerKernel(this);}
     
-    virtual OSStatus Render(AudioUnitRenderActionFlags & ioActionFlags,
-                            AudioTimeStamp const& inTimeStamp,
+    virtual OSStatus Render(AudioUnitRenderActionFlags &ioActionFlags,
+                            AudioTimeStamp const &inTimeStamp,
                             UInt32 inFramesToProcess);
     
 	// for custom property
-	virtual OSStatus GetPropertyInfo(AudioUnitPropertyID	inID,
-                                                AudioUnitScope inScope,
-                                                AudioUnitElement inElement,
-                                                UInt32 & outDataSize,
-                                                Boolean	& outWritable);
+    virtual OSStatus GetPropertyInfo(AudioUnitPropertyID inID,
+                                     AudioUnitScope inScope,
+                                     AudioUnitElement inElement,
+                                     UInt32 &outDataSize,
+                                     Boolean &outWritable);
     
-	virtual OSStatus GetProperty(AudioUnitPropertyID inID,
-                                            AudioUnitScope inScope,
-                                            AudioUnitElement inElement,
-                                            void * outData);
+    virtual OSStatus GetProperty(AudioUnitPropertyID inID,
+                                 AudioUnitScope inScope,
+                                 AudioUnitElement inElement,
+                                 void *outData);
     
-    
-	virtual OSStatus GetParameterInfo(AudioUnitScope inScope,
-                                                 AudioUnitParameterID inParameterID,
-                                                 AudioUnitParameterInfo	&outParameterInfo);
+    virtual OSStatus GetParameterInfo(AudioUnitScope inScope,
+                                      AudioUnitParameterID inParameterID,
+                                      AudioUnitParameterInfo &outParameterInfo);
     
     virtual void SetParameter(AudioUnitParameterID inID, AudioUnitParameterValue inValue);
     
     // handle presets:
     virtual OSStatus GetPresets(CFArrayRef *outData) const;
-    virtual OSStatus NewFactoryPresetSet(const AUPreset & inNewFactoryPreset);
+    virtual OSStatus NewFactoryPresetSet(const AUPreset &inNewFactoryPreset);
 	
-	// we'll report a 1ms tail.   A reverb effect would have a much more substantial tail on
-	// the order of several seconds....
-	//
-	virtual	bool SupportsTail() {return false;}
+    // we'll report a 1ms tail.   A reverb effect would have a much more substantial tail on
+    // the order of several seconds....
+    virtual bool SupportsTail() {return false;}
     
-	// we have no latency
-	//
-	// A lookahead compressor or FFT-based processor should report the true latency in seconds
-    virtual Float64	GetLatency() {return 0.0;}
+    // we have no latency
+    // A lookahead compressor or FFT-based processor should report the true latency in seconds
+    virtual Float64 GetLatency() {return 0.0;}
 
 protected:
-    
+
 private:
     
     int mChannels;
@@ -206,7 +204,7 @@ static const int kNumberPresets = 1;
 
 static AUPreset kPresets[kNumberPresets] =
 {
-    { kPreset_One, CFSTR("Preset One") }
+    {kPreset_One, CFSTR("Preset One")}
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,12 +216,9 @@ static AUPreset kPresets[kNumberPresets] =
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 VirtualTrigger::VirtualTrigger(AudioUnit component) : AUEffectBase(component) {
     
-    
-	// all the parameters must be set to their initial values here
-	//
-	// these calls have the effect both of defining the parameters for the first time
-	// and assigning their initial values
-	//
+    // all the parameters must be set to their initial values here
+    // these calls have the effect both of defining the parameters for the first time
+    // and assigning their initial values
     SetParameter(kTriggerParam_WindowSize, kDefaultWindowSize);
     SetParameter(kTriggerParam_TriggerThreshold, kDefaultTriggerThreshold);
     SetParameter(kTriggerParam_TriggerResetDelay, kDefaultTriggerResetDelay);
@@ -235,19 +230,19 @@ VirtualTrigger::VirtualTrigger(AudioUnit component) : AUEffectBase(component) {
     SetParameter(kTriggerParam_InternalMidi, kDefaultInternalMidi);
     SetParameter(kTriggerParam_PlayState, kDefaultPlayState);
     
-	SetParamHasSampleRateDependency(true);
+    SetParamHasSampleRateDependency(true);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::Initialize
+//    VirtualTrigger::Initialize
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OSStatus VirtualTrigger::Initialize() {
     
     //create effect base
-	OSStatus result = AUEffectBase::Initialize();
+    OSStatus result = AUEffectBase::Initialize();
     
-	if (result == noErr ) {
+    if (result == noErr ) {
         
         //create MIDI client
         MIDIClientCreate(CFSTR("VirtualTrigger MIDI"), NULL, NULL, &mMidiClient);
@@ -268,9 +263,9 @@ OSStatus VirtualTrigger::Initialize() {
 
         mAudioDisplayData.amplitude = 0;
         mAudioDisplayData.triggered = false;
-	}
+    }
     
-	return result;
+    return result;
 }
 
 void VirtualTrigger::Cleanup() {
@@ -279,13 +274,13 @@ void VirtualTrigger::Cleanup() {
     if (mMidiOutputPort) MIDIPortDispose(mMidiOutputPort);
 }
 
-OSStatus VirtualTrigger::Render(AudioUnitRenderActionFlags & ioActionFlags,
-                                AudioTimeStamp const& inTimeStamp,
+OSStatus VirtualTrigger::Render(AudioUnitRenderActionFlags &ioActionFlags,
+                                AudioTimeStamp const &inTimeStamp,
                                 UInt32 inFramesToProcess) {
     
     UInt32 actionFlags = 0;
-	OSStatus err = PullInput(0, actionFlags, inTimeStamp, inFramesToProcess);
-	if (err) return err;
+    OSStatus err = PullInput(0, actionFlags, inTimeStamp, inFramesToProcess);
+    if (err) return err;
     
     //reset
     bool triggered = false;
@@ -323,7 +318,6 @@ OSStatus VirtualTrigger::Render(AudioUnitRenderActionFlags & ioActionFlags,
             
             //GetParameter(kAudioUnitProperty_Latency);
             triggerTime = audioProcessData.triggerTime;
-            //inTimeStamp.mSampleTime;
         }
     }
 
@@ -375,7 +369,6 @@ OSStatus VirtualTrigger::Render(AudioUnitRenderActionFlags & ioActionFlags,
         if (internalMidi > 0) {
             //internal
             MIDIReceived(mMidiSource, pktList);
-            
         } else {
             //external
             for (ItemCount i = 0; i < MIDIGetNumberOfDestinations(); ++i) {
@@ -403,86 +396,86 @@ OSStatus VirtualTrigger::Render(AudioUnitRenderActionFlags & ioActionFlags,
 #pragma mark ____Parameters
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::GetParameterInfo
+//    VirtualTrigger::GetParameterInfo
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OSStatus VirtualTrigger::GetParameterInfo(AudioUnitScope inScope,
                                           AudioUnitParameterID inParameterID,
                                           AudioUnitParameterInfo &outParameterInfo) {
     
-	OSStatus result = noErr;
+    OSStatus result = noErr;
     
-	outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable + kAudioUnitParameterFlag_IsReadable;
+    outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable + kAudioUnitParameterFlag_IsReadable;
     
-	if (inScope == kAudioUnitScope_Global) {
-		
-		switch(inParameterID) {
+    if (inScope == kAudioUnitScope_Global) {
+	
+        switch(inParameterID) {
                 
             case kTriggerParam_WindowSize:
-				AUBase::FillInParameterName (outParameterInfo, kWindowSize_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_SampleFrames;
-				outParameterInfo.minValue = kMinWindowSize;
-				outParameterInfo.maxValue = kMaxWindowSize;
-				outParameterInfo.defaultValue = kDefaultWindowSize;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kWindowSize_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_SampleFrames;
+                outParameterInfo.minValue = kMinWindowSize;
+                outParameterInfo.maxValue = kMaxWindowSize;
+                outParameterInfo.defaultValue = kDefaultWindowSize;
+                break;
                 
             case kTriggerParam_TriggerThreshold:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerThreshold_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinTriggerThreshold;
-				outParameterInfo.maxValue = kMaxTriggerThreshold;
-				outParameterInfo.defaultValue = kDefaultTriggerThreshold;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerThreshold_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinTriggerThreshold;
+                outParameterInfo.maxValue = kMaxTriggerThreshold;
+                outParameterInfo.defaultValue = kDefaultTriggerThreshold;
+                break;
                 
             case kTriggerParam_TriggerResetDelay:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerResetDelay_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinTriggerResetDelay;
-				outParameterInfo.maxValue = kMaxTriggerResetDelay;
-				outParameterInfo.defaultValue = kDefaultTriggerResetDelay;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerResetDelay_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinTriggerResetDelay;
+                outParameterInfo.maxValue = kMaxTriggerResetDelay;
+                outParameterInfo.defaultValue = kDefaultTriggerResetDelay;
+                break;
   
             case kTriggerParam_TriggerNote:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerNote_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinTriggerNote;
-				outParameterInfo.maxValue = kMaxTriggerNote;
-				outParameterInfo.defaultValue = kDefaultTriggerNote;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerNote_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinTriggerNote;
+                outParameterInfo.maxValue = kMaxTriggerNote;
+                outParameterInfo.defaultValue = kDefaultTriggerNote;
+                break;
                 
             case kTriggerParam_TriggerOctave:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerOctave_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinOctave;
-				outParameterInfo.maxValue = kMaxOctave;
-				outParameterInfo.defaultValue = kDefaultOctave;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerOctave_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinOctave;
+                outParameterInfo.maxValue = kMaxOctave;
+                outParameterInfo.defaultValue = kDefaultOctave;
+                break;
                 
             case kTriggerParam_MidiChannel:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerMidiChannel_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinMidiChannel;
-				outParameterInfo.maxValue = kMaxMidiChannel;
-				outParameterInfo.defaultValue = kDefaultMidiChannel;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerMidiChannel_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinMidiChannel;
+                outParameterInfo.maxValue = kMaxMidiChannel;
+                outParameterInfo.defaultValue = kDefaultMidiChannel;
+                break;
                 
             case kTriggerParam_TriggerMode:
-				AUBase::FillInParameterName (outParameterInfo, kTriggerMode_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinTriggerMode;
-				outParameterInfo.maxValue = kMaxTriggerMode;
-				outParameterInfo.defaultValue = kDefaultTriggerMode;
-				break;
+                AUBase::FillInParameterName (outParameterInfo, kTriggerMode_Name, false);
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinTriggerMode;
+                outParameterInfo.maxValue = kMaxTriggerMode;
+                outParameterInfo.defaultValue = kDefaultTriggerMode;
+                break;
                 
             case kTriggerParam_Waiting:
                 //read only
                 outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable;
                 AUBase::FillInParameterName (outParameterInfo, kWaiting_Name, false);
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				outParameterInfo.minValue = kMinWaiting;
-				outParameterInfo.maxValue = kMaxWaiting;
-				outParameterInfo.defaultValue = kDefaultWaiting;
-				break;
+                outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+                outParameterInfo.minValue = kMinWaiting;
+                outParameterInfo.maxValue = kMaxWaiting;
+                outParameterInfo.defaultValue = kDefaultWaiting;
+                break;
 
             case kTriggerParam_InternalMidi:
                 AUBase::FillInParameterName (outParameterInfo, kInternalMidi_Name, false);
@@ -503,14 +496,14 @@ OSStatus VirtualTrigger::GetParameterInfo(AudioUnitScope inScope,
                 break;
 
             default:
-				result = kAudioUnitErr_InvalidParameter;
-				break;
-		}
-	} else {
-		result = kAudioUnitErr_InvalidParameter;
+                result = kAudioUnitErr_InvalidParameter;
+                break;
 	}
+    } else {
+        result = kAudioUnitErr_InvalidParameter;
+    }
 	
-	return result;
+    return result;
 }
 
 void VirtualTrigger::SetParameter(AudioUnitParameterID inID, AudioUnitParameterValue inValue) {
@@ -524,7 +517,6 @@ void VirtualTrigger::SetParameter(AudioUnitParameterID inID, AudioUnitParameterV
                 VirtualTriggerKernel *virtualTriggerKernel = dynamic_cast<VirtualTriggerKernel*>(mKernelList[i]);
                 virtualTriggerKernel->Reset();
             }
-
         }
 
     } else if (inID == kTriggerParam_Waiting) {
@@ -545,23 +537,23 @@ void VirtualTrigger::SetParameter(AudioUnitParameterID inID, AudioUnitParameterV
 #pragma mark ____Properties
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::GetPropertyInfo
+//    VirtualTrigger::GetPropertyInfo
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OSStatus VirtualTrigger::GetPropertyInfo (AudioUnitPropertyID inID,
                                           AudioUnitScope inScope,
                                           AudioUnitElement inElement,
-                                          UInt32 & outDataSize,
-                                          Boolean & outWritable) {
+                                          UInt32 &outDataSize,
+                                          Boolean &outWritable) {
     
-	if (inScope == kAudioUnitScope_Global) {
+    if (inScope == kAudioUnitScope_Global) {
 		
         switch (inID) {
                 
-			case kAudioUnitProperty_CocoaUI:
-				outWritable = false;
-				outDataSize = sizeof (AudioUnitCocoaViewInfo);
-				return noErr;
+            case kAudioUnitProperty_CocoaUI:
+                outWritable = false;
+                outDataSize = sizeof (AudioUnitCocoaViewInfo);
+                return noErr;
                 
             case kAudioUnitCustomProperty_AudioDisplayData:
                 outWritable = false;
@@ -570,54 +562,52 @@ OSStatus VirtualTrigger::GetPropertyInfo (AudioUnitPropertyID inID,
         }
     }
 	
-	return AUEffectBase::GetPropertyInfo (inID, inScope, inElement, outDataSize, outWritable);
+    return AUEffectBase::GetPropertyInfo (inID, inScope, inElement, outDataSize, outWritable);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::GetProperty
+//    VirtualTrigger::GetProperty
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OSStatus VirtualTrigger::GetProperty (AudioUnitPropertyID inID,
                                       AudioUnitScope inScope,
                                       AudioUnitElement inElement,
-                                      void * outData) {
+                                      void *outData) {
     
-	if (inScope == kAudioUnitScope_Global) {
+    if (inScope == kAudioUnitScope_Global) {
         
-		switch (inID) {
+        switch (inID) {
                 
             // This property allows the host application to find the UI associated with this
             // AudioUnit
-            //
-			case kAudioUnitProperty_CocoaUI: {
+            case kAudioUnitProperty_CocoaUI: {
                 
-				// Look for a resource in the main bundle by name and type.
-				CFBundleRef bundle = CFBundleGetBundleWithIdentifier( CFSTR("com.shau.audiounit.VirtualTrigger") );
-				
-				if (bundle == NULL) return fnfErr;
+                // Look for a resource in the main bundle by name and type.
+                CFBundleRef bundle = CFBundleGetBundleWithIdentifier( CFSTR("com.shau.audiounit.VirtualTrigger") );
                 
-				CFURLRef bundleURL = CFBundleCopyResourceURL( bundle,
-                                                             CFSTR("CocoaTriggerView"),	// this is the name of the cocoa bundle as specified in the CocoaViewFactory.plist
-                                                             CFSTR("bundle"),			// this is the extension of the cocoa bundle
+                if (bundle == NULL) return fnfErr;
+                
+                CFURLRef bundleURL = CFBundleCopyResourceURL(bundle,
+                                                             CFSTR("CocoaTriggerView"), // this is the name of the cocoa bundle as specified in the CocoaViewFactory.plist
+                                                             CFSTR("bundle"), // this is the extension of the cocoa bundle
                                                              NULL);
                 
                 if (bundleURL == NULL) return fnfErr;
                 
-				CFStringRef className = CFSTR("VirtualTrigger_ViewFactory");	// name of the main class that implements the AUCocoaUIBase protocol
-				AudioUnitCocoaViewInfo cocoaInfo = { bundleURL, { className } };
-				*((AudioUnitCocoaViewInfo *)outData) = cocoaInfo;
-				
-				return noErr;
-			}
+                CFStringRef className = CFSTR("VirtualTrigger_ViewFactory"); // name of the main class that implements the AUCocoaUIBase protocol
+                AudioUnitCocoaViewInfo cocoaInfo = { bundleURL, { className } };
+                *((AudioUnitCocoaViewInfo *)outData) = cocoaInfo;
+                return noErr;
+            }
                 
             case kAudioUnitCustomProperty_AudioDisplayData: {
                 
                 // the kernels are only created if we are initialized
-				// the UI should check for the error and not draw
-				if(!IsInitialized() ) return kAudioUnitErr_Uninitialized;
+                // the UI should check for the error and not draw
+                if(!IsInitialized() ) return kAudioUnitErr_Uninitialized;
                 
                 //get and set UI values
-				AudioDisplayData *audioDisplayData = ((AudioDisplayData *) outData);
+                AudioDisplayData *audioDisplayData = ((AudioDisplayData *) outData);
 
                 audioDisplayData->amplitude = mAudioDisplayData.amplitude;
                 audioDisplayData->triggered = mAudioDisplayData.triggered;
@@ -628,55 +618,53 @@ OSStatus VirtualTrigger::GetProperty (AudioUnitPropertyID inID,
                 return  noErr;
             }
         }
-	}
+    }
 	
-	// if we've gotten this far, handles the standard properties
-	return AUEffectBase::GetProperty(inID, inScope, inElement, outData);
+    // if we've gotten this far, handles the standard properties
+    return AUEffectBase::GetProperty(inID, inScope, inElement, outData);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark ____Presets
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::GetPresets
+//    VirtualTrigger::GetPresets
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OSStatus VirtualTrigger::GetPresets (CFArrayRef * outData) const {
+OSStatus VirtualTrigger::GetPresets (CFArrayRef *outData) const {
     
     // this is used to determine if presets are supported
     // which in this unit they are so we implement this method!
-	if (outData == NULL) return noErr;
+    if (outData == NULL) return noErr;
 	
-	CFMutableArrayRef theArray = CFArrayCreateMutable (NULL, kNumberPresets, NULL);
-	for (int i = 0; i < kNumberPresets; ++i) {
-		CFArrayAppendValue (theArray, &kPresets[i]);
+    CFMutableArrayRef theArray = CFArrayCreateMutable (NULL, kNumberPresets, NULL);
+    for (int i = 0; i < kNumberPresets; ++i) {
+        CFArrayAppendValue (theArray, &kPresets[i]);
     }
     
-	*outData = (CFArrayRef)theArray;	// client is responsible for releasing the array
-	return noErr;
+    *outData = (CFArrayRef)theArray; // client is responsible for releasing the array
+    return noErr;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTrigger::NewFactoryPresetSet
+//    VirtualTrigger::NewFactoryPresetSet
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OSStatus VirtualTrigger::NewFactoryPresetSet (const AUPreset & inNewFactoryPreset) {
+OSStatus VirtualTrigger::NewFactoryPresetSet (const AUPreset &inNewFactoryPreset) {
     
-	SInt32 chosenPreset = inNewFactoryPreset.presetNumber;
+    SInt32 chosenPreset = inNewFactoryPreset.presetNumber;
 	
-	for (int i = 0; i < kNumberPresets; ++i) {
+    for (int i = 0; i < kNumberPresets; ++i) {
         
-		if (chosenPreset == kPresets[i].presetNumber) {
+        if (chosenPreset == kPresets[i].presetNumber) {
             
-			// set whatever state you need to based on this preset's selection
-			//
-			// Here we use a switch statement, but it would also be possible to
-			// use chosenPreset as an index into an array (if you publish the preset
-			// numbers as indices in the GetPresets() method)
-			//
-			switch(chosenPreset) {
-                    
-				case kPreset_One:
+            // set whatever state you need to based on this preset's selection
+            // Here we use a switch statement, but it would also be possible to
+            // use chosenPreset as an index into an array (if you publish the preset
+            // numbers as indices in the GetPresets() method)
+            switch(chosenPreset) {
+                
+                case kPreset_One:
                     SetParameter(kTriggerParam_WindowSize, 32);
                     SetParameter(kTriggerParam_TriggerThreshold, 0.5);
                     SetParameter(kTriggerParam_TriggerResetDelay, 5);
@@ -686,28 +674,27 @@ OSStatus VirtualTrigger::NewFactoryPresetSet (const AUPreset & inNewFactoryPrese
                     SetParameter(kTriggerParam_TriggerMode, kTriggerModeRms);
                     SetParameter(kTriggerParam_Waiting, kDefaultWaiting);
                     SetParameter(kTriggerParam_InternalMidi, kDefaultInternalMidi);
-					break;
-			}
+                    break;
+            	
+            }
             
             SetAFactoryPresetAsCurrent (kPresets[i]);
-			return noErr;
-		}
-	}
+            return noErr;
+        }
+    }
 	
-	return kAudioUnitErr_InvalidPropertyValue;
+    return kAudioUnitErr_InvalidPropertyValue;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark ____VirtualTriggerKernel
 
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTriggerKernel::VirtualTriggerKernel()
+//    VirtualTriggerKernel::VirtualTriggerKernel()
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 VirtualTriggerKernel::VirtualTriggerKernel(AUEffectBase *inAudioUnit) : AUKernelBase(inAudioUnit) {
-    
-	Reset();
+    Reset();
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -718,11 +705,11 @@ VirtualTriggerKernel::~VirtualTriggerKernel() {
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTriggerKernel::Reset()
+//    VirtualTriggerKernel::Reset()
 //
-//		It's very important to fully reset all state variables to their
-//		initial settings here.  For delay/reverb effects, the delay buffers must
-//		also be cleared here.
+//    It's very important to fully reset all state variables to their
+//    initial settings here.  For delay/reverb effects, the delay buffers must
+//    also be cleared here.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void VirtualTriggerKernel::Reset() {
     
@@ -755,14 +742,14 @@ struct AudioProcessData VirtualTriggerKernel::GetAudioProcessData() {
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//	VirtualTriggerKernel::Process(int inFramesToProcess)
+//    VirtualTriggerKernel::Process(int inFramesToProcess)
 //
-//		We process one non-interleaved stream at a time
+//    We process one non-interleaved stream at a time
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void VirtualTriggerKernel::Process(	const Float32 *inSourceP,
+void VirtualTriggerKernel::Process(const Float32 *inSourceP,
                                    Float32 *inDestP,
                                    UInt32 inFramesToProcess,
-                                   UInt32 inNumChannels,	// for version 2 AudioUnits inNumChannels is always 1
+                                   UInt32 inNumChannels, // for version 2 AudioUnits inNumChannels is always 1
                                    bool &ioSilence) {
     
     double bufferEnergy = 0; //used for audio display data
