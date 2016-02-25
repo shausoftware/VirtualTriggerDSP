@@ -1,2 +1,2 @@
 # VirtualTriggerDSP
-DSP Code for Virtual Trigger Audio Unit Pluggin
+DSP Code for Virtual Trigger Audio Unit Plug-in
